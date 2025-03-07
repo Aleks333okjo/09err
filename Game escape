@@ -1,0 +1,240 @@
+import time
+import pygame
+import random
+
+# Инициализация Pygame
+pygame.init()
+
+# Настройка джойстика
+pygame.joystick.init()
+joystick_count = pygame.joystick.get_count()
+joystick = None
+if joystick_count > 0:
+    joystick = pygame.joystick.Joystick(0)
+    joystick.init()
+
+class Game:
+    def init(self):
+        self.difficulty = ""
+        self.player_health = 0
+        self.killer_speed = 0
+        self.killer_sensitivity = 0
+        self.killer_proximity = 0.0
+        self.is_alive = True
+        self.items_found = []
+        self.clues_found = []
+        self.escape_attempted = False
+        self.escape_items = {
+            "ключ_от_машины": {"вероятность": 0.3, "использован": False},
+            "ключ_от_лодки": {"вероятность": 0.2, "использован": False},
+            "сигнальный_пистолет": {"вероятность": 0.4, "использован": False},
+            "лом": {"вероятность": 0.5, "использован": False},
+            "рация": {"вероятность": 0.25, "использован": False}
+        }
+
+    def set_difficulty_parameters(self):
+        difficulties = {
+            "Легко": (7, 1, 0.3),
+            "Средне": (5, 2, 0.5),
+            "Тяжело": (3, 3, 0.7),
+            "Экстрим": (1, 4, 0.9),
+            "Супертяжело": (1, 5, 1.0)
+        }
+        self.player_health, self.killer_speed, self.killer_sensitivity = difficulties.get(
+            self.difficulty, (7, 1, 0.3)
+        )
+
+    def start(self):
+        print("Добро пожаловать в 'Заброшенный город'!")
+        time.sleep(1)
+        print("Выберите уровень сложности:")
+        difficulties = ["Легко", "Средне", "Тяжело", "Экстрим", "Супертяжело"]
+        for i, d in enumerate(difficulties, 1):
+            print(f"{i}. {d}")
+
+        choice = input("Ваш выбор: ")
+        try:
+            self.difficulty = difficulties[int(choice)-1]
+        except (ValueError, IndexError):
+            print("Неверный выбор. Установлен режим 'Легко'.")
+            self.difficulty = "Легко"
+
+        self.set_difficulty_parameters()
+        print(f"\nРежим: {self.difficulty}")
+        print(f"Жизни: {self.player_health}")
+        print(f"Скорость убийцы: {self.killer_speed}")
+        print(f"Чувствительность к шуму: {self.killer_sensitivity}")
+        time.sleep(2)
+        print("\nВы - Джек, частный детектив, который ищет свою пропавшую сестру...")
+        time.sleep(2)
+        self.explore()
+
+    def explore(self):
+        while self.is_alive:
+            self.random_event()
+            self.killer_proximity += 0.1 * self.killer_speed
+            
+            if self.check_death():
+                break
+
+            print("\nВы на пустынной улице. Выберите действие:")
+            print("1. Исследовать здание")
+            print("2. Спрятаться")
+            print("3. Инвентарь")
+            print("4. Попытаться сбежать")
+            print("5. Использовать джойстик")
+
+            if joystick:
+                for event in pygame.event.get():
+                    if event.type == pygame.JOYAXISMOTION:
+                        self.handle_movement(event)
+
+            choice = input("Ваш выбор: ")
+
+            if choice == '1':
+                self.find_item()
+            elif choice == '2':
+                self.hide()
+            elif choice == '3':
+                self.check_inventory()
+            elif choice == '4':
+                self.attempt_escape()
+            elif choice == '5':
+                print("Используйте джойстик для движения")
+            else:
+                print("Неверный выбор!")
+
+    def handle_movement(self, event):
+        axes = {
+            0: ("влево", "вправо"),
+            1: ("вперед", "назад"),
+            2: ("перекат влево", "перекат вправо"),
+            3: ("прыжок", ""),
+            4: ("прыжок вниз", "")
+        }
+        
+        if event.axis in axes:
+            direction = axes[event.axis]
+            if event.value < -0.5:
+                print(f"Джек движется {direction[0]}")
+            elif event.value > 0.5:
+                if direction[1]: print(f"Джек движется {direction[1]}")
+def find_item(self):
+        found = False
+        for item, params in self.escape_items.items():
+            if random.random() < params["вероятность"] and item not in self.items_found:
+                self.items_found.append(item)
+                print(f"\nВы нашли {item.replace('_', ' ')}!")
+                found = True
+                break
+        if not found:
+            print("\nЗдесь ничего полезного...")
+
+def hide(self):
+        print("\nВы пытаетесь спрятаться...")
+        if random.random() < 0.6 - self.killer_sensitivity:
+            print("Удалось спрятаться! Убийца проходит мимо.")
+            self.killer_proximity = max(0, self.killer_proximity - 1)
+        else:
+            print("Убийца заметил вас!")
+            self.player_health -= 1
+
+def check_inventory(self):
+        print("\n--- ИНВЕНТАРЬ ---")
+        for item in self.items_found:
+            status = " (использован)" if self.escape_items[item]["использован"] else ""
+            print(f"- {item.replace('_', ' ').capitalize()}{status}")
+        print(f"\nЗдоровье: {'❤️' * self.player_health}")
+        print(f"Приближение убийцы: {'▮' * int(self.killer_proximity)}")
+
+def attempt_escape(self):
+        print("\nСпособы побега:")
+        options = [
+            ("Машина", "ключ_от_машины"),
+            ("Лодка", "ключ_от_лодки"),
+            ("Сигнал", "сигнальный_пистолет"),
+            ("Взлом", "лом"),
+            ("Вызов помощи", "рация")
+        ]
+        
+        for i, (desc, item) in enumerate(options, 1):
+            print(f"{i}. {desc} {'✅' if item in self.items_found else '❌'}")
+
+        choice = input("Выберите способ: ")
+        try:
+            selected = options[int(choice)-1]
+            if selected[1] in self.items_found:
+                self.execute_escape(selected[1])
+            else:
+                print("Нужного предмета нет в инвентаре!")
+        except (ValueError, IndexError):
+            print("Неверный выбор!")
+def execute_escape(self, item):
+        success_chance = {
+            "ключ_от_машины": 0.7,
+            "ключ_от_лодки": 0.6,
+            "сигнальный_пистолет": 0.8,
+            "лом": 0.4,
+            "рация": 0.5
+        }[item] - (self.killer_sensitivity * 0.2)
+
+        if random.random() < success_chance:
+            print("\nУСПЕХ! Вы сбежали!")
+            self.escape_attempted = True
+            self.is_alive = False
+        else:
+            print("\nПровал! Убийца приближается!")
+            self.player_health -= 2
+            self.escape_items[item]["использован"] = True
+
+def random_event(self):
+        events = [
+            (0.3, "Слышен странный скрежет металла...", self.increase_killer_proximity),
+            (0.2, "Ветер захлопывает дверь!", self.make_noise),
+            (0.1, "Найден труп с запиской!", self.add_clue)
+        ]
+        
+        for prob, msg, effect in events:
+            if random.random() < prob:
+                print(f"\nСОБЫТИЕ: {msg}")
+                effect()
+                break
+
+def increase_killer_proximity(self):
+        self.killer_proximity += 0.3   
+
+def make_noise(self):
+        if random.random() < self.killer_sensitivity:
+            print("Убийца услышал шум!")
+            self.killer_proximity += 0.5
+def add_clue(self):
+        clues = [
+            "Остерегайтесь воды...",
+            "Он ненавидит свет...",
+            "Ключ от церкви...",
+            "Не доверяйте теням..."
+        ]
+        new_clue = random.choice(clues)
+        if new_clue not in self.clues_found:
+            self.clues_found.append(new_clue)
+            print(f"Подсказка: {new_clue}")
+
+def check_death(self):
+        death_conditions = [
+            (self.player_health <= 0, "Вы истекли кровью..."),
+            (random.random() < self.killer_sensitivity / 2, "Убийца почуял ваш страх!"),
+
+(len(self.items_found) > 3 and not self.escape_attempted, "Вы споткнулись под тяжестью вещей!")
+        ]
+        
+        for condition, message in death_conditions:
+            if condition:
+                print(f"\n💀 СМЕРТЬ: {message}")
+                self.is_alive = False
+                return True
+        return False
+
+if Game == "main":
+    game = Game()
+    game.start()
+    print("\nИгра окончена. Спасибо за игру!")
